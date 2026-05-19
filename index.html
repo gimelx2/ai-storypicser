@@ -35,7 +35,7 @@
         <div id="album-timeline" class="space-y-16">
             <div class="flex flex-col items-center justify-center py-20 text-slate-400">
                 <i class="fa-solid fa-spinner fa-spin text-3xl mb-4"></i>
-                <p class="animate-pulse">מכינים את הקוקוסים, כבר מתחילים...</p>
+                <p class="animate-pulse">טוענים את התמונות והחוויות...</p>
             </div>
         </div>
     </main>
@@ -64,9 +64,6 @@
     <script>
         let tripData = [];
         let currentMode = 'public';
-        
-        // מזהה התיקייה הציבורית שלך
-        const DRIVE_FOLDER_ID = "14qzH9zuoeqIyeo7lEFzfICL3AcrmYpUq";
 
         async function loadTripData() {
             try {
@@ -80,7 +77,6 @@
                     <div class="text-center p-10 bg-red-50 rounded-3xl text-red-700 border border-red-100">
                         <i class="fa-solid fa-circle-exclamation text-4xl mb-4"></i>
                         <p class="font-bold">תקלה בטעינת הנתונים</p>
-                        <p class="text-sm opacity-70">ודא שהקובץ trip_data_for_web.json הועלה לגיטהאב באותו הנתיב.</p>
                     </div>`;
             }
         }
@@ -122,11 +118,10 @@
                             <div class="relative">
                                 <div class="img-carousel flex overflow-x-auto gap-4 no-scrollbar pb-4 px-2 -mx-2 sm:grid sm:grid-cols-3 sm:overflow-visible">
                                     ${day.featured_images.map(img => {
-                                        // שליפת השם מתוך האובייקט בצורה בטוחה
                                         const imgName = (img && typeof img === 'object') ? img.filename : img;
                                         
-                                        // פתרון הקסם: שימוש בכתובת CDN קבועה ורשמית של גוגל דרייב למשיכת קבצים לפי שם מתוך תיקייה פתוחה!
-                                        const srcUrl = `https://img.statically.io/google-drive/${DRIVE_FOLDER_ID}/${imgName}`;
+                                        // עדכון נתיב: פנייה ישירה לתוך תיקיית images בריפוזיטורי
+                                        const srcUrl = `./images/${imgName}`;
                                         
                                         return `
                                             <div class="img-item min-w-[85%] sm:min-w-0 aspect-[4/5] sm:aspect-square bg-slate-200 rounded-[1.5rem] overflow-hidden shadow-md group cursor-pointer active:scale-95 transition-transform">
