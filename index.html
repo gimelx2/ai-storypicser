@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הטיול שלנו לתאילנד</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-xl font-bold text-emerald-700">🇹🇭 יומן המסע לתאילנד</h1>
+            
+            <div class="bg-gray-100 p-1 rounded-xl flex items-center border border-gray-200">
+                <button id="btn-public" onclick="switchMode('public')" class="px-4 py-2 text-sm font-medium rounded-lg bg-white shadow-sm text-emerald-800 transition-all cursor-pointer">
+                    🌍 בלוג מטיילים (ציבורי)
+                </button>
+                <button id="btn-family" onclick="switchMode('family')" class="px-4 py-2 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-700 transition-all cursor-pointer">
+                    👨‍👩‍👧‍👦 אלבום משפחתי
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 py-8">
+        <div id="album-timeline" class="space-y-12">
+            <div class="text-center py-12 text-gray-500">טוען את אלבום הטיול...</div>
+        </div>
+    </main>
+
+    <div id="password-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl text-center">
+            <div class="text-4xl mb-2">🔒</div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">אזור משפחתי מוגן</h3>
+            <p class="text-sm text-gray-500 mb-4">אנא הזן את קוד הגישה כדי לצפות בגרסה הפרטית הכוללת שמות ובדיחות פנימיות.</p>
+            <input type="password" id="pwd-input" class="w-full px-4 py-2 border border-gray-300 rounded-xl text-center mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="קוד גישה">
+            <div class="flex gap-2">
+                <button onclick="checkPassword()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded-xl transition-all cursor-pointer">אישור</button>
+                <button onclick="closeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded-xl transition-all cursor-pointer">ביטול</button>
+            </div>
+            <p id="error-msg" class="text-red-500 text-xs mt-2 hidden">קוד שגוי, נסה שוב קאפ! 🇹🇭</p>
+        </div>
+    </div>
+
+    <script>
+        let tripData = [];
+        let currentMode = 'public'; // ברירת מחדל - ציבורי ואפילייט
+
+        // טעינת הנתונים מקובץ ה-JSON שנוצר בשלב 3
+        async function loadTripData() {
+            try {
+                const response = await fetch('trip_data_for_web.json');
+                tripData = await response.json();
+                renderTimeline();
+            } catch (error) {
+                document.getElementById('album-timeline').innerHTML = `<p class="text-center text-red-500">תקלה בטעינת קובץ הנתונים (JSON).</p>`;
+            }
+        }
+
+        // רינדור ציר הזמן בצורה רספונסיבית
+        function renderTimeline() {
+            const container = document.getElementById('album-timeline');
+            container.innerHTML = '';
+
+            tripData.forEach(day => {
+                const storyText = currentMode === 'family' ? day.family_story : day.public_story;
+                
+                // המרת סוגרי האפילייט לקישורים מעוצבים באופן אוטומטי בגרסה הציבורית
+                let formattedStory = storyText;
+                if (currentMode === 'public') {
+                    formattedStory = formattedStory.replace(/\[Link to Book Hotel\]/g, `<a href="#" class="text-emerald-600 underline font-semibold hover:text-emerald-700">להזמנת המלון המומלץ לחצו כאן</a>`);
+                    formattedStory = formattedStory.replace(/\[Link to Tour\]/g, `<a href="#" class="text-emerald-600 underline font-semibold hover:text-emerald-700">להזמנת האטרקציה בהנחה לחצו כאן</a>`);
+                }
+
+                // יצירת רשימת האטרקציות כתגיות
+                const tagsHTML = day.attractions_identified.map(att => `<span class="bg-emerald-50 text-emerald-700 text-xs px-2.5 py-1 rounded-full font-medium border border-emerald-100">${att}</span>`).join(' ');
+
+                const dayHTML = `
+                    <article class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all hover:shadow-md">
+                        <div class="p-6">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <span class="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg">יום ${day.day_number} | ${day.date}</span>
+                                <div class="flex flex-wrap gap-1">${tagsHTML}</div>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">${day.main_title}</h2>
+                            <p class="text-gray-600 leading-relaxed whitespace-pre-line text-justify">${formattedStory}</p>
+                        </div>
+                        
+                        <div class="p-6 bg-gray-50 border-t border-gray-100">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                ${day.featured_images.map(img => `
+                                    <div class="aspect-square bg-gray-200 rounded-xl overflow-hidden shadow-inner group relative">
+                                        <img src="images/${img}" alt="תמונה מיום ${day.day_number}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy">
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </article>
+                `;
+                container.innerHTML += dayHTML;
+            });
+        }
+
+        // ניהול החלפת המצבים והגנת הסיסמה
+        function switchMode(mode) {
+            if (mode === 'family' && currentMode !== 'family') {
+                // פתיחת חלון סיסמה אם מנסים לעבור לפרטי
+                document.getElementById('password-modal').classList.remove('hidden');
+                document.getElementById('pwd-input').focus();
+            } else if (mode === 'public') {
+                currentMode = 'public';
+                updateToggleButtons();
+                renderTimeline();
+            }
+        }
+
+        function checkPassword() {
+            const input = document.getElementById('pwd-input').value;
+            if (input === 'gross2024') {
+                currentMode = 'family';
+                closeModal();
+                updateToggleButtons();
+                renderTimeline();
+            } else {
+                const errMsg = document.getElementById('error-msg');
+                errMsg.classList.remove('hidden');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('password-modal').classList.add('hidden');
+            document.getElementById('pwd-input').value = '';
+            document.getElementById('error-msg').classAdd = 'hidden';
+        }
+
+        function updateToggleButtons() {
+            const btnPublic = document.getElementById('btn-public');
+            const btnFamily = document.getElementById('btn-family');
+
+            if (currentMode === 'public') {
+                btnPublic.className = "px-4 py-2 text-sm font-medium rounded-lg bg-white shadow-sm text-emerald-800 transition-all cursor-pointer";
+                btnFamily.className = "px-4 py-2 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-700 transition-all cursor-pointer";
+            } else {
+                btnFamily.className = "px-4 py-2 text-sm font-medium rounded-lg bg-white shadow-sm text-emerald-800 transition-all cursor-pointer";
+                btnPublic.className = "px-4 py-2 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-700 transition-all cursor-pointer";
+            }
+        }
+
+        // האזנה למקש Enter בחלונית הסיסמה
+        document.getElementById('pwd-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkPassword();
+        });
+
+        // טעינה ראשונית
+        loadTripData();
+    </script>
+</body>
+</html>
