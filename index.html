@@ -64,10 +64,10 @@
     <script>
         let tripData = [];
         let currentMode = 'public';
+        const DRIVE_FOLDER_ID = "14qzH9zuoeqIyeo7lEFzfICL3AcrmYpUq";
 
         async function loadTripData() {
             try {
-                // שימוש בנתיב יחסי וביטול Cache כדי להבטיח קריאה של הקובץ החדש
                 const response = await fetch('./trip_data_for_web.json?v=' + Date.now());
                 if (!response.ok) throw new Error('Network response was not ok');
                 tripData = await response.json();
@@ -90,7 +90,6 @@
             tripData.forEach((day, idx) => {
                 const storyText = currentMode === 'family' ? day.family_story : day.public_story;
                 
-                // עיבוד לינקים לאפילייט (בגרסה הציבורית)
                 let formattedStory = storyText;
                 if (currentMode === 'public') {
                     formattedStory = formattedStory.replace(/\[Link to Book Hotel\]/g, `<a href="#" class="text-emerald-600 font-bold underline decoration-2 underline-offset-4">להזמנת המלון <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`);
@@ -121,12 +120,17 @@
                             <div class="relative">
                                 <div class="img-carousel flex overflow-x-auto gap-4 no-scrollbar pb-4 px-2 -mx-2 sm:grid sm:grid-cols-3 sm:overflow-visible">
                                     ${day.featured_images.map(img => {
-                                        const url = typeof img === 'object' ? img.direct_url : img;
-                                        const name = typeof img === 'object' ? img.filename : 'Thailand 2024';
+                                        // התאמה למבנה החדש: שליפת השם מתוך האובייקט בצורה בטוחה
+                                        const imgName = (img && typeof img === 'object') ? img.filename : img;
+                                        
+                                        // יצירת קישור פרוקסי דינמי לדרייב הציבורי לפי שם הקובץ שנשמר
+                                        const srcUrl = `https://drive.google.com/thumbnail?id=${DRIVE_FOLDER_ID}&sz=w800&filename=${encodeURIComponent(imgName)}`;
+                                        
                                         return `
                                             <div class="img-item min-w-[85%] sm:min-w-0 aspect-[4/5] sm:aspect-square bg-slate-200 rounded-[1.5rem] overflow-hidden shadow-md group cursor-pointer active:scale-95 transition-transform">
-                                                <img src="${url}" 
-                                                     onclick="openLightbox('${url}', 'יום ${day.day_number}: ${day.main_title}')"
+                                                <img src="${srcUrl}" 
+                                                     onclick="openLightbox('${srcUrl}', 'יום ${day.day_number}: ${day.main_title}')"
+                                                     onerror="this.src='https://placehold.co/600x600/e2e8f0/0f766e?text=${encodeURIComponent(imgName)}'"
                                                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                                                      loading="lazy">
                                             </div>
@@ -143,8 +147,6 @@
                 container.innerHTML += dayHTML;
             });
         }
-
-        // --- Functions ---
 
         function switchMode(mode) {
             if (mode === 'family' && currentMode !== 'family') {
@@ -197,7 +199,6 @@
             document.body.style.overflow = 'auto';
         }
 
-        // Listeners
         document.getElementById('pwd-input').addEventListener('keypress', (e) => e.key === 'Enter' && checkPassword());
 
         loadTripData();
