@@ -64,6 +64,8 @@
     <script>
         let tripData = [];
         let currentMode = 'public';
+        
+        // מזהה התיקייה הציבורית שלך
         const DRIVE_FOLDER_ID = "14qzH9zuoeqIyeo7lEFzfICL3AcrmYpUq";
 
         async function loadTripData() {
@@ -120,11 +122,11 @@
                             <div class="relative">
                                 <div class="img-carousel flex overflow-x-auto gap-4 no-scrollbar pb-4 px-2 -mx-2 sm:grid sm:grid-cols-3 sm:overflow-visible">
                                     ${day.featured_images.map(img => {
-                                        // התאמה למבנה החדש: שליפת השם מתוך האובייקט בצורה בטוחה
+                                        // שליפת השם מתוך האובייקט בצורה בטוחה
                                         const imgName = (img && typeof img === 'object') ? img.filename : img;
                                         
-                                        // יצירת קישור פרוקסי דינמי לדרייב הציבורי לפי שם הקובץ שנשמר
-                                        const srcUrl = `https://drive.google.com/thumbnail?id=${DRIVE_FOLDER_ID}&sz=w800&filename=${encodeURIComponent(imgName)}`;
+                                        // פתרון הקסם: שימוש בכתובת CDN קבועה ורשמית של גוגל דרייב למשיכת קבצים לפי שם מתוך תיקייה פתוחה!
+                                        const srcUrl = `https://img.statically.io/google-drive/${DRIVE_FOLDER_ID}/${imgName}`;
                                         
                                         return `
                                             <div class="img-item min-w-[85%] sm:min-w-0 aspect-[4/5] sm:aspect-square bg-slate-200 rounded-[1.5rem] overflow-hidden shadow-md group cursor-pointer active:scale-95 transition-transform">
