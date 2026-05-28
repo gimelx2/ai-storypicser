@@ -67,6 +67,7 @@
 
         async function loadTripData() {
             try {
+                // שימוש ב-./ מבטיח קריאה מתוך התיקייה הנוכחית בה נמצא ה-HTML
                 const response = await fetch('./trip_data_for_web.json?v=' + Date.now());
                 if (!response.ok) throw new Error('Network response was not ok');
                 tripData = await response.json();
@@ -77,6 +78,7 @@
                     <div class="text-center p-10 bg-red-50 rounded-3xl text-red-700 border border-red-100">
                         <i class="fa-solid fa-circle-exclamation text-4xl mb-4"></i>
                         <p class="font-bold">תקלה בטעינת הנתונים</p>
+                        <p class="text-xs text-slate-400 mt-2">ודא שקובץ ה-JSON נמצא בתיקייה ונקרא בדיוק trip_data_for_web.json</p>
                     </div>`;
             }
         }
