@@ -18,7 +18,12 @@
 
     <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
         <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h1 class="text-2xl font-black text-emerald-800 tracking-tight">THAILAND <span class="font-light text-slate-400">2024</span></h1>
+            <div class="flex items-center gap-3">
+                <a href="../index.html" class="w-9 h-9 text-slate-400 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center transition-colors shadow-inner" title="חזור לעמוד הראשי">
+                    <i class="fa-solid fa-house text-sm"></i>
+                </a>
+                <h1 class="text-2xl font-black text-emerald-800 tracking-tight">THAILAND <span class="font-light text-slate-400">2024</span></h1>
+            </div>
             
             <div class="bg-slate-200 p-1 rounded-2xl flex items-center shadow-inner">
                 <button id="btn-public" onclick="switchMode('public')" class="px-5 py-2 text-sm font-bold rounded-xl transition-all duration-300 bg-white text-emerald-700 shadow-sm cursor-pointer">
@@ -77,6 +82,7 @@
                     <div class="text-center p-10 bg-red-50 rounded-3xl text-red-700 border border-red-100">
                         <i class="fa-solid fa-circle-exclamation text-4xl mb-4"></i>
                         <p class="font-bold">תקלה בטעינת הנתונים</p>
+                        <p class="text-sm mt-2">ודא שקובץ ה-JSON נמצא בתוך התיקייה thailand2024 ונקרא בדיוק trip_data_for_web.json</p>
                     </div>`;
             }
         }
@@ -88,11 +94,9 @@
             tripData.forEach((day, idx) => {
                 const storyText = currentMode === 'family' ? day.family_story : day.public_story;
                 
-                let formattedStory = storyText;
-                if (currentMode === 'public') {
-                    formattedStory = formattedStory.replace(/\[Link to Book Hotel\]/g, `<a href="#" class="text-emerald-600 font-bold underline decoration-2 underline-offset-4">להזמנת המלון <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`);
-                    formattedStory = formattedStory.replace(/\[Link to Tour\]/g, `<a href="#" class="text-emerald-600 font-bold underline decoration-2 underline-offset-4">להזמנת האטרקציה <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`);
-                }
+                let formattedStory = storyText
+                    .replace(/\[Link to Book Hotel\]/g, `<a href="#" class="text-emerald-600 font-bold underline decoration-2 underline-offset-4">להזמנת המלון <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`)
+                    .replace(/\[Link to Tour\]/g, `<a href="#" class="text-emerald-600 font-bold underline decoration-2 underline-offset-4">להזמנת האטרקציה <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`);
 
                 const tags = day.attractions_identified.map(t => `<span class="text-[10px] uppercase tracking-widest font-bold px-2 py-1 bg-slate-100 text-slate-500 rounded-md">${t}</span>`).join('');
 
@@ -118,9 +122,12 @@
                             <div class="relative">
                                 <div class="img-carousel flex overflow-x-auto gap-4 no-scrollbar pb-4 px-2 -mx-2 sm:grid sm:grid-cols-3 sm:overflow-visible">
                                     ${day.featured_images.map(img => {
-                                        const imgName = (img && typeof img === 'object') ? img.filename : img;
+                                        let rawPath = (img && typeof img === 'object') ? img.filename : img;
                                         
-                                        // עדכון נתיב: פנייה ישירה לתוך תיקיית images בריפוזיטורי
+                                        // חילוץ שם הקובץ בלבד (תמיכה בנתיבים מכל סוג)
+                                        const parts = rawPath.split('/');
+                                        const imgName = parts[parts.length - 1]; 
+                                        
                                         const srcUrl = `./images/${imgName}`;
                                         
                                         return `
