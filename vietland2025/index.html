@@ -1,1 +1,204 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תאילנד 2024 | יומן המסע המשפחתי</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; scroll-behavior: smooth; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .img-carousel { scroll-snap-type: x mandatory; }
+        .img-item { scroll-snap-align: start; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
 
+    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl font-black text-emerald-800 tracking-tight">THAILAND <span class="font-light text-slate-400">2024</span></h1>
+            
+            <div class="bg-slate-200 p-1 rounded-2xl flex items-center shadow-inner">
+                <button id="btn-public" onclick="switchMode('public')" class="px-5 py-2 text-sm font-bold rounded-xl transition-all duration-300 bg-white text-emerald-700 shadow-sm cursor-pointer">
+                    🌍 בלוג ציבורי
+                </button>
+                <button id="btn-family" onclick="switchMode('family')" class="px-5 py-2 text-sm font-bold rounded-xl transition-all duration-300 text-slate-500 hover:text-slate-800 cursor-pointer">
+                    👨‍👩‍👧‍👦 אלבום משפחתי
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-10">
+        <div id="album-timeline" class="space-y-16">
+            <div class="flex flex-col items-center justify-center py-20 text-slate-400">
+                <i class="fa-solid fa-spinner fa-spin text-3xl mb-4"></i>
+                <p class="animate-pulse">טוענים את התמונות והחוויות...</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="password-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-8 shadow-2xl text-center scale-95 transition-transform duration-300">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">אזור משפחתי</h3>
+            <p class="text-sm text-slate-500 mb-6">הכניסה למשפחת גרוס בלבד :)</p>
+            <input type="password" id="pwd-input" class="w-full px-5 py-3 bg-slate-100 border-none rounded-2xl text-center mb-4 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="מה הסיסמה?">
+            <div class="flex gap-3">
+                <button onclick="checkPassword()" class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-2xl hover:bg-emerald-700 cursor-pointer">כניסה</button>
+                <button onclick="closeModal()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-2xl hover:bg-slate-200 cursor-pointer">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lightbox" class="hidden fixed inset-0 bg-black z-[200] flex flex-col items-center justify-center">
+        <button onclick="closeLightbox()" class="absolute top-6 right-6 text-white text-3xl p-4"><i class="fa-solid fa-xmark"></i></button>
+        <img id="lightbox-img" src="" class="max-w-[95%] max-h-[85vh] object-contain shadow-2xl">
+        <p id="lightbox-caption" class="text-white mt-4 font-light text-sm"></p>
+    </div>
+
+    <script>
+        let tripData = [];
+        let currentMode = 'public';
+
+        async function loadTripData() {
+            try {
+                const response = await fetch('./trip_data_for_web.json?v=' + Date.now());
+                if (!response.ok) throw new Error('Network response was not ok');
+                tripData = await response.json();
+                renderTimeline();
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                document.getElementById('album-timeline').innerHTML = `
+                    <div class="text-center p-10 bg-red-50 rounded-3xl text-red-700 border border-red-100">
+                        <i class="fa-solid fa-circle-exclamation text-4xl mb-4"></i>
+                        <p class="font-bold">תקלה בטעינת הנתונים</p>
+                    </div>`;
+            }
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('album-timeline');
+            container.innerHTML = '';
+
+            tripData.forEach((day, idx) => {
+                const storyText = currentMode === 'family' ? day.family_story : day.public_story;
+                
+                let formattedStory = storyText;
+                if (currentMode === 'public') {
+                    formattedStory = formattedStory.replace(/\[Link to Book Hotel\]/g, `<a href="#" class="text-emerald-600 font-bold underline decoration-2 underline-offset-4">להזמנת המלון <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`);
+                    formattedStory = formattedStory.replace(/\[Link to Tour\]/g, `<a href="#" class="text-emerald-600 font-bold underline decoration-2 underline-offset-4">להזמנת האטרקציה <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`);
+                }
+
+                const tags = day.attractions_identified.map(t => `<span class="text-[10px] uppercase tracking-widest font-bold px-2 py-1 bg-slate-100 text-slate-500 rounded-md">${t}</span>`).join('');
+
+                const dayHTML = `
+                    <article class="relative">
+                        <div class="absolute -right-2 sm:-right-6 top-0 bottom-0 w-px bg-slate-200 hidden sm:block"></div>
+                        
+                        <div class="flex flex-col gap-6">
+                            <div class="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <span class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-lg shadow-emerald-200">
+                                        ${day.day_number}
+                                    </span>
+                                    <div>
+                                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">${day.date}</div>
+                                        <h2 class="text-xl font-black text-slate-800">${day.main_title}</h2>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-2 mb-6">${tags}</div>
+                                <p class="text-slate-600 leading-relaxed text-justify whitespace-pre-line">${formattedStory}</p>
+                            </div>
+
+                            <div class="relative">
+                                <div class="img-carousel flex overflow-x-auto gap-4 no-scrollbar pb-4 px-2 -mx-2 sm:grid sm:grid-cols-3 sm:overflow-visible">
+                                    ${day.featured_images.map(img => {
+                                        const imgName = (img && typeof img === 'object') ? img.filename : img;
+                                        
+                                        // עדכון נתיב: פנייה ישירה לתוך תיקיית images בריפוזיטורי
+                                        const srcUrl = `./images/${imgName}`;
+                                        
+                                        return `
+                                            <div class="img-item min-w-[85%] sm:min-w-0 aspect-[4/5] sm:aspect-square bg-slate-200 rounded-[1.5rem] overflow-hidden shadow-md group cursor-pointer active:scale-95 transition-transform">
+                                                <img src="${srcUrl}" 
+                                                     onclick="openLightbox('${srcUrl}', 'יום ${day.day_number}: ${day.main_title}')"
+                                                     onerror="this.src='https://placehold.co/600x600/e2e8f0/0f766e?text=${encodeURIComponent(imgName)}'"
+                                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                                     loading="lazy">
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                                <div class="sm:hidden text-center text-[10px] text-slate-400 font-bold animate-pulse mt-2">
+                                    <i class="fa-solid fa-arrow-left"></i> החליקו לתמונות נוספות
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                `;
+                container.innerHTML += dayHTML;
+            });
+        }
+
+        function switchMode(mode) {
+            if (mode === 'family' && currentMode !== 'family') {
+                document.getElementById('password-modal').classList.remove('hidden');
+                document.getElementById('pwd-input').focus();
+            } else {
+                currentMode = 'public';
+                updateUI();
+            }
+        }
+
+        function checkPassword() {
+            if (document.getElementById('pwd-input').value === 'gross2024') {
+                currentMode = 'family';
+                closeModal();
+                updateUI();
+            } else {
+                alert("קוד שגוי...");
+            }
+        }
+
+        function updateUI() {
+            const isPublic = currentMode === 'public';
+            document.getElementById('btn-public').className = isPublic ? 
+                "px-5 py-2 text-sm font-bold rounded-xl transition-all duration-300 bg-white text-emerald-700 shadow-sm cursor-pointer" :
+                "px-5 py-2 text-sm font-bold rounded-xl transition-all duration-300 text-slate-500 hover:text-slate-800 cursor-pointer";
+            
+            document.getElementById('btn-family').className = !isPublic ? 
+                "px-5 py-2 text-sm font-bold rounded-xl transition-all duration-300 bg-white text-emerald-700 shadow-sm cursor-pointer" :
+                "px-5 py-2 text-sm font-bold rounded-xl transition-all duration-300 text-slate-500 hover:text-slate-800 cursor-pointer";
+
+            renderTimeline();
+            window.scrollTo(0,0);
+        }
+
+        function closeModal() {
+            document.getElementById('password-modal').classList.add('hidden');
+            document.getElementById('pwd-input').value = '';
+        }
+
+        function openLightbox(url, title) {
+            document.getElementById('lightbox-img').src = url;
+            document.getElementById('lightbox-caption').innerText = title;
+            document.getElementById('lightbox').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        document.getElementById('pwd-input').addEventListener('keypress', (e) => e.key === 'Enter' && checkPassword());
+
+        loadTripData();
+    </script>
+</body>
+</html>
