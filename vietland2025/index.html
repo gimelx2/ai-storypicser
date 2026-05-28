@@ -72,7 +72,6 @@
 
         async function loadTripData() {
             try {
-                // קריאה לקובץ ה-JSON המקומי באותה התיקייה
                 const response = await fetch('./trip_data_for_web.json?v=' + Date.now());
                 if (!response.ok) throw new Error('Network response was not ok');
                 tripData = await response.json();
@@ -95,11 +94,10 @@
             tripData.forEach((day, idx) => {
                 const storyText = currentMode === 'family' ? day.family_story : day.public_story;
                 
-                let formattedStory = storyText;
-                if (currentMode === 'public') {
-                    formattedStory = formattedStory.replace(/\[Link to Book Hotel\]/g, `<a href="#" class="text-amber-700 font-bold underline decoration-2 underline-offset-4">להזמנת המלון <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`);
-                    formattedStory = formattedStory.replace(/\[Link to Tour\]/g, `<a href="#" class="text-amber-700 font-bold underline decoration-2 underline-offset-4">להזמנת האטרקציה <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`);
-                }
+                // החלפת כל סוגי תגיות הקישורים (עברית ואנגלית) ללינקים מעוצבים
+                let formattedStory = storyText
+                    .replace(/\[Link to Book Hotel\]|\[קישור להזמנת מלון בהאנוי\]|\[להזמנת לינה במקום הפסטורלי הזה לחצו כאן\]/g, `<a href="#" class="text-amber-700 font-bold underline decoration-2 underline-offset-4">להזמנת המלון <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`)
+                    .replace(/\[Link to Tour\]|\[קישור לסיור מודרך בהאנוי\]/g, `<a href="#" class="text-amber-700 font-bold underline decoration-2 underline-offset-4">להזמנת האטרקציה <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`);
 
                 const tags = day.attractions_identified.map(t => `<span class="text-[10px] uppercase tracking-widest font-bold px-2 py-1 bg-slate-100 text-slate-500 rounded-md">${t}</span>`).join('');
 
@@ -125,7 +123,11 @@
                             <div class="relative">
                                 <div class="img-carousel flex overflow-x-auto gap-4 no-scrollbar pb-4 px-2 -mx-2 sm:grid sm:grid-cols-3 sm:overflow-visible">
                                     ${day.featured_images.map(img => {
-                                        const imgName = (img && typeof img === 'object') ? img.filename : img;
+                                        let imgName = (img && typeof img === 'object') ? img.filename : img;
+                                        
+                                        // הגנה קריטית: חילוץ שם הקובץ בלבד והסרת נתיבי תיקיות ישנים בעברית
+                                        imgName = imgName.split('/').pop().split('\\').pop();
+                                        
                                         const srcUrl = `./images/${imgName}`;
                                         
                                         return `
