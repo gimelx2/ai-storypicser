@@ -94,7 +94,6 @@
             tripData.forEach((day, idx) => {
                 const storyText = currentMode === 'family' ? day.family_story : day.public_story;
                 
-                // החלפת כל סוגי תגיות הקישורים (עברית ואנגלית) ללינקים מעוצבים
                 let formattedStory = storyText
                     .replace(/\[Link to Book Hotel\]|\[קישור להזמנת מלון בהאנוי\]|\[להזמנת לינה במקום הפסטורלי הזה לחצו כאן\]/g, `<a href="#" class="text-amber-700 font-bold underline decoration-2 underline-offset-4">להזמנת המלון <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`)
                     .replace(/\[Link to Tour\]|\[קישור לסיור מודרך בהאנוי\]/g, `<a href="#" class="text-amber-700 font-bold underline decoration-2 underline-offset-4">להזמנת האטרקציה <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>`);
@@ -123,11 +122,13 @@
                             <div class="relative">
                                 <div class="img-carousel flex overflow-x-auto gap-4 no-scrollbar pb-4 px-2 -mx-2 sm:grid sm:grid-cols-3 sm:overflow-visible">
                                     ${day.featured_images.map(img => {
-                                        let imgName = (img && typeof img === 'object') ? img.filename : img;
+                                        let rawPath = (img && typeof img === 'object') ? img.filename : img;
                                         
-                                        // הגנה קריטית: חילוץ שם הקובץ בלבד והסרת נתיבי תיקיות ישנים בעברית
-                                        imgName = imgName.split('/').pop().split('\\').pop();
+                                        // 🌟 תיקון קשוח: חילוץ שם הקובץ בלבד (כל מה שאחרי הסלאש האחרון)
+                                        const parts = rawPath.split('/');
+                                        const imgName = parts[parts.length - 1]; 
                                         
+                                        // הנתיב המדויק לתיקיית images המקומית בגיטהאב
                                         const srcUrl = `./images/${imgName}`;
                                         
                                         return `
